@@ -4,8 +4,11 @@ import java.util.Map.Entry;
 
 import net.minecraft.block.BlockFurnace;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.inventory.Container;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipes;
@@ -32,6 +35,8 @@ public class TileFastFurnace extends TileEntityFurnace {
 	@ItemStackHolder(value = "minecraft:sponge", meta = 1)
 	public static final ItemStack WET_SPONGE = ItemStack.EMPTY;
 
+	public float xpStored=0.F;
+
 	public TileFastFurnace() {
 		this.totalCookTime = 200;
 	}
@@ -39,6 +44,7 @@ public class TileFastFurnace extends TileEntityFurnace {
 	@Override
 	public void readFromNBT(NBTTagCompound tag) {
 		super.readFromNBT(tag);
+		this.xpStored=tag.getFloat("StoredXp");
 	}
 
 	@Override
@@ -47,8 +53,10 @@ public class TileFastFurnace extends TileEntityFurnace {
 		compound.setInteger("BurnTime", this.furnaceBurnTime);
 		compound.setInteger("CookTime", this.cookTime);
 		compound.setInteger("CookTimeTotal", this.totalCookTime);
+		compound.setFloat("StoredXp",this.xpStored);
 		return compound;
 	}
+
 
 	@Override
 	public void update() {
@@ -57,7 +65,7 @@ public class TileFastFurnace extends TileEntityFurnace {
 			return;
 		} else if (world.isRemote) return;
 
-		ItemStack fuel = ItemStack.EMPTY;
+		ItemStack fuel;
 		boolean canSmelt = canSmelt();
 
 		if (!this.isBurning() && !(fuel = furnaceItemStacks.get(FUEL)).isEmpty()) {
@@ -137,7 +145,7 @@ public class TileFastFurnace extends TileEntityFurnace {
 
 		if (output.isEmpty()) this.furnaceItemStacks.set(OUTPUT, recipeOutput.copy());
 		else if (itemsMatch(output, recipeOutput)) output.grow(recipeOutput.getCount());
-
+		xpStored+=FurnaceRecipes.instance().getSmeltingExperience(recipeOutput)*recipeOutput.getCount();
 		if (input.isItemEqual(WET_SPONGE) && this.furnaceItemStacks.get(FUEL).getItem() == Items.BUCKET) this.furnaceItemStacks.set(FUEL, new ItemStack(Items.WATER_BUCKET));
 
 		input.shrink(1);
@@ -147,12 +155,14 @@ public class TileFastFurnace extends TileEntityFurnace {
 	public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState) {
 		if (oldState.getBlock() == Blocks.FURNACE && newState.getBlock() == Blocks.LIT_FURNACE) return false;
 		else if (oldState.getBlock() == Blocks.LIT_FURNACE && newState.getBlock() == Blocks.FURNACE) return false;
-		else if (oldState.getBlock() == newState.getBlock()) return false;
-		return true;
-	}
+		else return oldState.getBlock() != newState.getBlock();
+    }
 
 	boolean itemsMatch(ItemStack a, ItemStack b) {
 		return FastFurnace.useStrictMatching ? ItemHandlerHelper.canItemStacksStack(a, b) : (a.isItemEqual(b) && ItemStack.areItemStackTagsEqual(a, b));
 	}
-
+	@Override
+	public Container createContainer(InventoryPlayer p_174876_1_, EntityPlayer p_174876_2_) {
+		return new ContainerFastFurnace(p_174876_1_, this);
+	}
 }

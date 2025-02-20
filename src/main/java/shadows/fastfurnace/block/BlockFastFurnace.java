@@ -6,12 +6,14 @@ import net.minecraft.block.BlockFurnace;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.item.EntityXPOrb;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.Item;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import shadows.fastfurnace.FastFurnace;
 
 public class BlockFastFurnace extends BlockFurnace {
 
@@ -39,6 +41,14 @@ public class BlockFastFurnace extends BlockFurnace {
 			if (tileentity instanceof TileFastFurnace) {
 				InventoryHelper.dropInventoryItems(world, pos, (TileFastFurnace) tileentity);
 				world.updateComparatorOutputLevel(pos, this);
+				if(!world.isRemote) {
+					int xp = FastFurnace.getRandomXp(((TileFastFurnace) tileentity).xpStored);
+					while (xp > 0) {
+						final int k = EntityXPOrb.getXPSplit(xp);
+						xp -= k;
+						world.spawnEntity(new EntityXPOrb(world, pos.getX(), pos.getY() + 0.5, pos.getZ() + 0.5F, k));
+					}
+				}
 			}
 			world.removeTileEntity(pos);
 		}

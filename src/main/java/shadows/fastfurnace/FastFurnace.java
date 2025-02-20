@@ -1,5 +1,6 @@
 package shadows.fastfurnace;
 
+import net.minecraft.util.math.MathHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,9 +27,7 @@ public class FastFurnace {
 
 	public static final String MODID = "fastfurnace";
 	public static final String MODNAME = "FastFurnace";
-	public static final String VERSION = "1.3.1";
-
-	public static final Logger LOG = LogManager.getLogger(MODID);
+	public static final String VERSION = "1.3.2";
 
 	public static boolean useStrictMatching = true;
 
@@ -63,7 +62,10 @@ public class FastFurnace {
 
 	static boolean shouldRun() {
 		boolean bwm = Loader.isModLoaded("betterwithmods");
-		return !bwm || bwm && !BWMCompat.isBWMFurnaceEnabled();
+		return !bwm || !BWMCompat.isBWMFurnaceEnabled();
 	}
-
+	public static int getRandomXp(float xp){
+		final int x = MathHelper.floor(xp);
+		return Math.random()<xp-x?x+1:x;
+	}
 }
